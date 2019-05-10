@@ -41,7 +41,7 @@
 
 #include <boost/tokenizer.hpp>
 
-enum ScoreType {ALL_ADDED, RATIO};
+enum ScoreType {ALL_ADDED, RATIO, TARGET_INT};
 
 class WindowSpec {
 
@@ -140,6 +140,17 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 	double target_isos[5] = { mono_mz, mono_mz + (massDiff / charge), mono_mz + 2 * (massDiff / charge), mono_mz + 3 * (massDiff / charge), mono_mz + 4 * (massDiff / charge) };
 	double target_intensities[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 
+	int temp_iso = 0;
+	while (temp_iso < 5 && target_isos[temp_iso] < range_front)
+		++temp_iso;
+
+	//std::cout << scan_num << " " <<ms1.size() << " " << mono_mz << " " << charge << " " << range_front << " " << range_end << std::endl;
+
+	if (temp_iso == 5 || target_isos[temp_iso] > range_end)
+	{
+		std::cout << "Dyn window " << scan_num << " contains no isotope" << std::endl;
+		std::cout << ms1.size() << " " << mono_mz << " " << charge << " " << range_front << " " << range_end << std::endl;
+	}
 	//std::cout << target_isos[0] << " " << target_isos[1] << " " << target_isos[2] << " " << target_isos[3] << " " << target_isos[4] << std::endl;
 	//std::cout << ms1.size() << " " << mono_mz << " " << charge << " " << range_front << " " << range_end << std::endl;
 
@@ -153,18 +164,27 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 	bool hit_iso = false;
 	double iso_comp = target_isos[0];
 
-	while (look_ahead->mz < range_front)
+	if (scan_num == 49674 || scan_num == 50471)
+	{
+		std::cout << "The bad one" << std::endl;
+		std::cout << ms1.size() << " " << mono_mz << " " << charge << " " << range_front << " " << range_end << std::endl;
+	}
+
+	while (look_ahead != peaks.end() && look_ahead->mz < range_front)
 	{
 		look_ahead++;
 		copier++;
 	}
+
+	if (look_ahead == peaks.end())
+		return -1;
 
 	if (mono_mz < range_front && abs(target_isos[0] - copier->mz) >= tol)
 	{
 		++skip_mono;
 		//std::cout << "Skipped mono!!" << std::endl;
 
-		missing_f << scan_num << std::endl;
+		//missing_f << scan_num << std::endl;
 		//std::cout << scan_num << std::endl;
 
 		copier = peaks.begin();
@@ -231,7 +251,9 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 	double total_pos = 0.0;
 	double total_neg = 0.0;
 
-	while (copier->mz < target_isos[4] + 0.1 && copier->mz < range_end)
+	double measured_intensity[5] = { target_intensities[0], 0, 0, 0, 0 };
+
+	while (copier != peaks.end() && copier->mz < target_isos[4] + 0.1 && copier->mz < range_end)
 	{
 		if (curr_iso < 5)
 		{
@@ -268,6 +290,7 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 					best_diff = curr_diff;
 					best_old_inten = copier->intensity;
 
+					
 					if (curr_iso == 0)
 						target_intensities[0] = best_old_inten;
 
@@ -337,6 +360,89 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 		}
 
 	}
+
+	while (copier != peaks.end() && copier->mz < range_end)
+	{
+		light_spec.push_back(peak(copier->mz, -1 * copier->intensity));
+		total_neg += copier->intensity;
+		//std::cout << "Running Neg Count: " << total_neg << std::endl;
+		copier++;
+	}
+
+
+	copier = peaks.begin();
+	while (copier->mz < target_isos[0] - 0.4)
+		++copier;
+
+	--copier;
+	curr_iso = 0;
+	best_diff = 100000.0;
+	best_old_inten = 0.0;
+
+	while (copier != peaks.end() && copier->mz < target_isos[4] + 0.1)
+	{
+		if (curr_iso < 5)
+		{
+			double curr_diff = abs(target_isos[curr_iso] - copier->mz);
+
+			//std::cout << "Target: " << target_isos[curr_iso] << std::endl;
+			//std::cout << "Current: " << copier->mz << std::endl;
+			//std::cout << "Diff: " << curr_diff << std::endl;
+
+			if (curr_diff < tol)
+			{
+				if (curr_diff < best_diff)
+				{
+					best_diff = curr_diff;
+					best_old_inten = copier->intensity;
+
+					measured_intensity[curr_iso] = best_old_inten;
+
+					if (curr_iso == 0)
+						target_intensities[0] = best_old_inten;
+					//if (target_intensities[curr_iso] > copier->intensity && abs((range_end - range_front) - 1.6) > .01)
+					//	std::cout << "candidate for testing..." << std::endl
+
+				}
+
+				copier++;
+
+			}
+
+			else if (copier->mz > target_isos[curr_iso])
+			{
+				if (curr_iso == 0)
+				{
+					for (int other_iso = 1; other_iso < 5; ++other_iso)
+					{
+						target_intensities[other_iso] = target_intensities[0] * (id.getContainer().at(other_iso).second / id.getContainer().at(0).second);
+					}
+				}
+
+				++curr_iso;
+				best_diff = 100000.0;
+				best_old_inten = 0.0;
+
+
+			}
+
+			else
+			{
+				//std::cout << "Running Neg Count: " << total_neg << std::endl;
+				++copier;
+			}
+
+		}
+
+		else
+		{
+			++copier;
+		}
+
+	}
+
+
+	missing_f << scan_num << "\t" <<  mono_mz << "\t" << charge << "\t" << measured_intensity[0] << "\t" << measured_intensity[1] << "\t" << measured_intensity[2] << "\t" << measured_intensity[3] << "\t" << measured_intensity[4] << std::endl;
 
 
 	/*
@@ -441,13 +547,7 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 
 	}
 	*/
-	while (copier->mz < range_end)
-	{
-		light_spec.push_back(peak(copier->mz, -1 * copier->intensity));
-		total_neg += copier->intensity;
-		//std::cout << "Running Neg Count: " << total_neg << std::endl;
-		copier++;
-	}
+	
 	
 
 	//standard total score
@@ -503,8 +603,11 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 		return ratio;
 	}
 
+	else if (type == TARGET_INT)
+		return total_pos;
+
 	else
-		return -1.0;
+		return -1;
 
 }
 
@@ -545,9 +648,13 @@ int main(int argc, char * argv[])
 
 	std::ifstream window_file(argv[2]);
 
+	std::ifstream time_file(argv[8]);
+
 	std::ofstream log("log.txt");
 
 	std::map<int, bool> dyn_scans;
+
+	std::map<int, double> inj_times;
 
 	std::map<WindowSpec, std::vector<Offset>> offsets;
 
@@ -603,6 +710,23 @@ int main(int argc, char * argv[])
 
 	}
 
+	if (time_file)
+	{
+		std::string line;
+		int scan;
+		double time;
+
+		while (std::getline(time_file, line))
+		{
+			std::istringstream iss(line);
+			iss >> scan >> time;
+
+			inj_times.insert({ scan, time });
+
+		}
+
+	}
+
 	std::map<WindowSpec, std::string> dyn_parents;
 
 	std::map<std::string, std::vector<family>> offset_family_lists;
@@ -644,6 +768,10 @@ int main(int argc, char * argv[])
 	std::ofstream reg_f;
 	reg_f.open(argv[7], std::ios_base::app);
 	//reg_f.open("reg_scores.txt");
+
+
+	std::ofstream master_f;
+	master_f.open("temp_scores.txt");
 
 	std::ofstream pair_f;
 	pair_f.open("pairs.txt");
@@ -765,6 +893,14 @@ int main(int argc, char * argv[])
 
 		else
 		{
+			double inject_time;
+			auto time_finder = inj_times.find(scan_num);
+
+			if (time_finder != inj_times.end())
+				inject_time = time_finder->second;
+
+			else
+				inject_time = 0.0;
 
 			auto scan_finder = dyn_scans.find(scan_num);
 			if (scan_finder != dyn_scans.end())
@@ -894,12 +1030,21 @@ int main(int argc, char * argv[])
 				double end = (double)final_center + s.getPrecursors().at(0).getIsolationWindowUpperOffset();
 
 				//this is to get data about edge conditions
-				double score = 0.0;
+				double pif_score, score, target_score = 0.0;
 
 				//std::cout << "Width: " << window_width << std::endl;
 				//if (abs(window_width - 0.4) >= 0.01)
 				//score = windowScore(ms1_collection.find(final_parent)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, scoring_type);
-				score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, scoring_type);
+				//score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, scoring_type);
+
+				if (ms1_collection.find(previous_ms1) != ms1_collection.end())
+				{
+					//pif_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, RATIO);
+					score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, ALL_ADDED);
+					//target_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, TARGET_INT);
+
+					//master_f << argv[9] << "\t" << score << "\t" << pif_score << "\t" << target_score << "\t" << inject_time << std::endl;
+				}
 
 				//std::cout << "Scan num: " << scan_num << " Window sister: " << sister << std::endl;
 
@@ -985,8 +1130,18 @@ int main(int argc, char * argv[])
 					std::cout << "What?" << std::endl;
 				}
 
+				double pif_score, score, target_score = 0.0;
 
-				double score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, scoring_type);
+				//score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, scoring_type);
+				
+				if (ms1_collection.find(previous_ms1) != ms1_collection.end())
+				{
+					//pif_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, RATIO);
+					score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, ALL_ADDED);
+					//target_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, TARGET_INT);
+
+					//master_f << argv[10] << "\t" << score << "\t" << pif_score << "\t" << target_score << "\t" << inject_time << std::endl;
+				}
 				//std::cout << "Standard Window Score: " << score << std::endl;
 				//std::cout << "For scan: " << scan_num << std::endl;
 
@@ -1030,6 +1185,15 @@ int main(int argc, char * argv[])
 	pair_f.close();
 	missing_f.close();
 	missing_reg_f.close();
+	master_f.close();
+
+	std::ifstream scores("temp_scores.txt");
+
+	std::ofstream final_f;
+	final_f.open("C:/dev/diw_junk_scores.txt", std::ios_base::app);
+
+	final_f << scores.rdbuf();
+	final_f.close();
 
 	std::cout << "Found Dyn = " << found_dynamic << " Missing Dyn = " << missing_dynamic << std::endl;
 	std::cout << dyn_ms2_count << std::endl;

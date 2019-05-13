@@ -125,13 +125,6 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 
 	id.getContainer().at(0).first;
 
-	/*
-	for (int nu = 0; nu < id.getContainer().size(); nu++)
-	{
-		std::cout << id.getContainer().at(nu).first << " " << id.getContainer().at(nu).second << std::endl;
-	}
-	*/
-
 	for (auto it = ms1.begin(); it != ms1.end(); it++)
 	{
 		peaks.push_back(peak(it->getPos(), it->getIntensity()));
@@ -184,7 +177,7 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 		++skip_mono;
 		//std::cout << "Skipped mono!!" << std::endl;
 
-		//missing_f << scan_num << std::endl;
+		missing_f << scan_num << std::endl;
 		//std::cout << scan_num << std::endl;
 
 		copier = peaks.begin();
@@ -442,7 +435,7 @@ double windowScore(OpenMS::MSSpectrum<>& ms1, double mono_mz, int charge, double
 	}
 
 
-	missing_f << scan_num << "\t" <<  mono_mz << "\t" << charge << "\t" << measured_intensity[0] << "\t" << measured_intensity[1] << "\t" << measured_intensity[2] << "\t" << measured_intensity[3] << "\t" << measured_intensity[4] << std::endl;
+	//missing_f << scan_num << "\t" <<  mono_mz << "\t" << charge << "\t" << measured_intensity[0] << "\t" << measured_intensity[1] << "\t" << measured_intensity[2] << "\t" << measured_intensity[3] << "\t" << measured_intensity[4] << std::endl;
 
 
 	/*
@@ -648,7 +641,7 @@ int main(int argc, char * argv[])
 
 	std::ifstream window_file(argv[2]);
 
-	std::ifstream time_file(argv[8]);
+	std::ifstream time_file(argv[3]);
 
 	std::ofstream log("log.txt");
 
@@ -735,8 +728,6 @@ int main(int argc, char * argv[])
 
 	std::map<int, double> ms2_scores;
 
-	std::ifstream dyn_parent_file(argv[3]);
-
 	std::queue<targetScore> regular_scores;
 
 	int rounding_prec = 5;
@@ -747,28 +738,6 @@ int main(int argc, char * argv[])
 
 	int left_rounding = 0;
 	int right_rounding = 0;
-
-	std::string score_type = argv[4];
-	ScoreType scoring_type;
-
-	if (score_type == "RATIO")
-		scoring_type = RATIO;
-
-
-	else if (score_type == "ALL_ADDED")
-		scoring_type = ALL_ADDED;
-
-	else
-		scoring_type = ALL_ADDED;
-
-	std::ofstream dyn_f;
-	dyn_f.open(argv[6], std::ios_base::app);
-	//dyn_f.open("dyn_scores.txt");
-
-	std::ofstream reg_f;
-	reg_f.open(argv[7], std::ios_base::app);
-	//reg_f.open("reg_scores.txt");
-
 
 	std::ofstream master_f;
 	master_f.open("temp_scores.txt");
@@ -782,37 +751,11 @@ int main(int argc, char * argv[])
 	std::ofstream missing_reg_f;
 	missing_reg_f.open("missing_reg_mono.txt");
 
-	/*
-	if (dyn_parent_file)
-	{
-		std::string line;
-		std::string center;
-		std::string offset;
-		std::string width;
-		std::string parent;
-		std::string sister;
-
-		while (std::getline(dyn_parent_file, line))
-		{
-			std::istringstream iss(line);
-			iss >> center >> offset >> width >> parent >> sister;
-
-			WindowSpec temp_window(atoi(parent.c_str()), width.substr(0, width.find('.') + 3), center.substr(0, center.find('.') + 5));
-
-
-			dyn_parents.insert({ temp_window, parent });
-
-		}
-
-	}
-	*/
-	int stop = 784397;
-
 	OpenMS::MzMLFile mzMLDataFileProfile;
 	OpenMS::MSExperiment msExperimentProfile;
 
 	try {
-		mzMLDataFileProfile.load(argv[5], msExperimentProfile);
+		mzMLDataFileProfile.load(argv[4], msExperimentProfile);
 	}
 	catch (std::exception& e) {
 		std::cout << e.what() << std::endl;
@@ -844,37 +787,6 @@ int main(int argc, char * argv[])
 		scan = scan.substr(scan.find('=') + 1);
 
 		int scan_num = atoi(scan.c_str());
-
-		//
-		//	Old exploratory code
-		//
-		//
-		/*
-		if (scan_num == 64 || scan_num == 2356)
-		{
-		std::cout << "One of the bad ones" << std::endl;
-		double center = (double)s.getPrecursors().at(0).getPos();
-		std::cout << center << std::endl;
-		std::string info = s.getName();
-		std::cout << info << std::endl;
-		info = s.getNativeID();
-		std::cout << info << std::endl;
-		info = s.getComment();
-		std::cout << info << std::endl;
-
-		std::vector<OpenMS::String> keyss;
-		s.getKeys(keyss);
-		std::cout << s.getMetaValue(keyss.at(5)) << std::endl;
-		std::cout << s.getMetaValue(keyss.at(6)) << std::endl;
-
-
-		double mono_mz = (double)s.getPrecursors().at(0).getMZ();
-		std::cout << "Special case?? " << mono_mz << std::endl;
-
-		int temp_charge = s.getPrecursors().at(0).getCharge();
-		std::cout << temp_charge << std::endl;
-		}
-		*/
 
 		if (s.getMSLevel() == 1)
 		{
@@ -945,10 +857,6 @@ int main(int argc, char * argv[])
 				else
 				{
 					look_lower = true;
-					//log << "Issues with scan: " << scan_num << " " << width_s << " " << center_s << std::endl;
-					//std::cout << center_s.at(center_s.find('.') + 2) << std::endl;
-					//std::cout << atoi(center_s.substr(center_s.find('.') + 2, center_s.find('.') + 3).c_str()) + 1 << std::endl;
-					//std::cout << atoi(center_s.substr(center_s.find('.') + 2, center_s.find('.') + 3).c_str()) - 1 << std::endl;
 				}
 
 				if (look_lower)
@@ -1032,18 +940,13 @@ int main(int argc, char * argv[])
 				//this is to get data about edge conditions
 				double pif_score, score, target_score = 0.0;
 
-				//std::cout << "Width: " << window_width << std::endl;
-				//if (abs(window_width - 0.4) >= 0.01)
-				//score = windowScore(ms1_collection.find(final_parent)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, scoring_type);
-				//score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, scoring_type);
-
 				if (ms1_collection.find(previous_ms1) != ms1_collection.end())
 				{
-					//pif_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, RATIO);
+					pif_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, RATIO);
 					score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, ALL_ADDED);
-					//target_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, TARGET_INT);
+					target_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, dyn_skip, left_rounding, right_rounding, missing_f, scan_num, TARGET_INT);
 
-					//master_f << argv[9] << "\t" << score << "\t" << pif_score << "\t" << target_score << "\t" << inject_time << std::endl;
+					master_f << argv[5] << "\t" << score << "\t" << pif_score << "\t" << target_score << "\t" << inject_time << std::endl;
 				}
 
 				//std::cout << "Scan num: " << scan_num << " Window sister: " << sister << std::endl;
@@ -1051,7 +954,7 @@ int main(int argc, char * argv[])
 				//std::cout << "Dynamic Window Score: " << score << std::endl;
 
 				//write out dynamic score and pair info
-				dyn_f << score << std::endl;
+				//dyn_f << score << std::endl;
 				pair_f << scan_num << "\t" << sister << std::endl;
 
 				auto sister_score_finder = ms2_scores.find(sister);
@@ -1136,17 +1039,17 @@ int main(int argc, char * argv[])
 				
 				if (ms1_collection.find(previous_ms1) != ms1_collection.end())
 				{
-					//pif_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, RATIO);
+					pif_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, RATIO);
 					score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, ALL_ADDED);
-					//target_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, TARGET_INT);
+					target_score = windowScore(ms1_collection.find(previous_ms1)->second, mono_mz, charge, front, end, reg_skip, left_rounding, right_rounding, missing_reg_f, scan_num, TARGET_INT);
 
-					//master_f << argv[10] << "\t" << score << "\t" << pif_score << "\t" << target_score << "\t" << inject_time << std::endl;
+					master_f << argv[6] << "\t" << score << "\t" << pif_score << "\t" << target_score << "\t" << inject_time << std::endl;
 				}
 				//std::cout << "Standard Window Score: " << score << std::endl;
 				//std::cout << "For scan: " << scan_num << std::endl;
 
 				//write out "reg window" score
-				reg_f << score << std::endl;
+				//reg_f << score << std::endl;
 
 				regular_scores.push(targetScore(mono_mz, score));
 				ms2_scores.insert({ scan_num, score });
@@ -1180,8 +1083,6 @@ int main(int argc, char * argv[])
 	
 
 	//close files and report numbers
-	dyn_f.close();
-	reg_f.close();
 	pair_f.close();
 	missing_f.close();
 	missing_reg_f.close();
@@ -1190,7 +1091,9 @@ int main(int argc, char * argv[])
 	std::ifstream scores("temp_scores.txt");
 
 	std::ofstream final_f;
-	final_f.open("C:/dev/diw_junk_scores.txt", std::ios_base::app);
+	//final_f.open("C:/dev/diw_junk_scores.txt", std::ios_base::app);
+
+	final_f.open(argv[7], std::ios_base::app);
 
 	final_f << scores.rdbuf();
 	final_f.close();

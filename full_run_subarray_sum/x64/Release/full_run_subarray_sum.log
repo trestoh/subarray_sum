@@ -1,4 +1,4 @@
-﻿Build started 4/22/2019 3:00:19 PM.
+﻿Build started 5/13/2019 10:45:14 AM.
      1>Project "C:\dev\dyn_win_tools\full_run_subarray_sum\full_run_subarray_sum\full_run_subarray_sum.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"C:\dev\OpenMS-2.2.0-src\src\openms\include" /I"C:\dev\qt-src-4.8.7\include\QtCore" /I"C:\dev\qt-src-4.8.7\include" /I"C:\dev\openms-220\src\openms\include\\" /IC:\dev\contrib\include /Zi /nologo /W3 /WX- /sdl /O2 /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"x64\Release\full_run_subarray_sum.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt full_run_subarray_sum.cpp
@@ -34,8 +34,6 @@
      1>C:\dev\OpenMS-2.2.0-src\src\openms\include\OpenMS/KERNEL/MSSpectrum.h(222): warning C4068: unknown pragma
      1>C:\dev\OpenMS-2.2.0-src\src\openms\include\OpenMS/KERNEL/MSExperiment.h(316): warning C4003: not enough actual parameters for macro 'max'
      1>C:\dev\OpenMS-2.2.0-src\src\openms\include\OpenMS/KERNEL/MSExperiment.h(359): warning C4003: not enough actual parameters for macro 'max'
-     1>full_run_subarray_sum.cpp(1033): warning C4101: 'pif_score' : unreferenced local variable
-     1>full_run_subarray_sum.cpp(1133): warning C4101: 'pif_score' : unreferenced local variable
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\dev\dyn_win_tools\full_run_subarray_sum\x64\Release\full_run_subarray_sum.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\dev\openms-220\src\openms\Release" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib OpenMS.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\dev\dyn_win_tools\full_run_subarray_sum\x64\Release\full_run_subarray_sum.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\dev\dyn_win_tools\full_run_subarray_sum\x64\Release\full_run_subarray_sum.lib" /MACHINE:X64 x64\Release\full_run_subarray_sum.obj
          x64\Release\stdafx.obj
@@ -46,4 +44,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:10.48
+Time Elapsed 00:00:06.59

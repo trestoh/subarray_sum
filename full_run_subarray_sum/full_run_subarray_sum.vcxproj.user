@@ -9,7 +9,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>C:\dev\workspace\HELA_05_24_w_dyn_wins.txt C:\dev\workspace\HELA_05_24_w_windows.txt C:\dev\workspace\HELA_IT_1_parents.txt RATIO C:\dev\rts_data\HELA_2019-03-25_DIW_24_width.mzML C:\dev\workspace\PIFs\dyn_pct_pos_0.0.txt C:\dev\workspace\PIFs\reg_pct_pos_1.6_w.txt C:\dev\workspace\dyn_times\times_0.5_2.txt dyn_1.5 static_1.6</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>C:\dev\workspace\HELA_05_24_w_dyn_wins.txt C:\dev\workspace\HELA_05_24_w_windows.txt C:\dev\workspace\dyn_times\times_0.5_2.4_w.txt C:\dev\rts_data\HELA_2019-03-25_DIW_24_width.mzML dyn_1.5 static_2.4 C:/dev/workspace/new_f_r_s_s_test.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
